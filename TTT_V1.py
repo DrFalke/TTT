@@ -89,3 +89,5 @@ while playing_aktiv == True:
 print("Game Over!")
 
 print("Thanks for playing!")
+
+print("hello")
