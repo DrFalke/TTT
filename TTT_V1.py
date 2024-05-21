@@ -85,8 +85,5 @@ while playing_aktiv == True:
         print("Unentschieden!")
         print("Das spiel hat {} runden gedauert".format(round))
         playing_aktiv = False
-
 print("Game Over!")
-
 print("Thanks for playing!")
-
