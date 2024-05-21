@@ -90,4 +90,3 @@ print("Game Over!")
 
 print("Thanks for playing!")
 
-print("hello")
