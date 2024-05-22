@@ -1,7 +1,7 @@
 import socket
 
-HOST = '10.10.217.136' #local host
-PORT = 8080 #port number
+HOST = '127.0.0.1' #local host
+PORT = 61111 #port number
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #create a socket object
 server.bind((HOST, PORT)) #bind to the port
