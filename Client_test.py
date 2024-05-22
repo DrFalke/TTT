@@ -1,6 +1,7 @@
 """
 First of all, you have to type in the IP address of the server you want to connect to.
 Then you have to type in your username.
+If you want to exit the chat, you can type in "/exit".
 Thats it, you are now connected to the server and can send messages! :) 
 """
 
