@@ -1,3 +1,11 @@
+"""
+First of all, you need to type in your username.
+Than you must wait for the clients to connect.
+After that you can send messages to all clients.
+If you want to exit the chat, you can type in /exit.
+"""
+
+
 import socket
 import threading
 
