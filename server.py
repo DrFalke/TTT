@@ -43,23 +43,22 @@ def send_message():
             client.send(f"{username} {message}".encode('utf-8'))
 
 def start_server():
-    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_socket.bind(('192.168.56.1', 8080))  # Bind to all available interfaces
-    server_socket.listen(5)
-    print("Server gestartet. Warte auf Verbindungen...")
+    ip_address = input("Bitte geben Sie die IP-Adresse ein: ")
+    try:
+        server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server_socket.bind((ip_address, 8080))  # Bindet an die angegebene IP-Adresse
+        server_socket.listen(5)
+        print("Server gestartet. Warte auf Verbindungen...")
+    except socket.gaierror:
+        print("Ungültige oder nicht erreichbare IP-Adresse. Bitte versuchen Sie es erneut.")
+        return
 
     send_thread = threading.Thread(target=send_message)
     send_thread.start()
 
     while True:
         client_socket, address = server_socket.accept()
-
         connected_clients.append(client_socket)
-
-        username = client_socket.recv(1024).decode('utf-8')  # Receive username from client
-        connected_clients.append((client_socket, username))  # Store tuple of socket and username
-        print(f"Neue Verbindung von {username} ({address[0]}:{address[1]})")  # Include username in message
-
         client_thread = threading.Thread(target=handle_client, args=(client_socket,))
         client_thread.start()
 start_server()
