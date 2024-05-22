@@ -11,6 +11,7 @@ while True:
     # Receive data from the server
     reply = client.recv(1024).decode()
 
+    #just for testing 
     # Print the received data (playground)
     print("Playground:")
     print(reply)
@@ -20,3 +21,4 @@ while True:
     # Send the coordinates to the server
     message = f"{x},{y}"
     client.send(message.encode())
+
