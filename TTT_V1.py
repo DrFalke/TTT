@@ -15,14 +15,33 @@ player = ""
 playing_aktiv = True
 #create a 3x3 matrix to represent the board
 def playground(spielfeld):
+    # Create the board string
+    board_str = ""
+    # Add the column numbers to the board string
     for j in range(x_dim):
-        print(" {}".format(j),end='')
-    print()
+        board_str += " {}".format(j)
+    board_str += "\n"
+    # Add the rows to the board string
     for y in range(y_dim):
+        # Add the row number to the board string
         for x in range(x_dim):
-            print("|{}".format(spielfeld[x][y]),end='')
-        print("|",y)
-    return spielfeld
+            # Add the field value to the board string
+            board_str += "|{}".format(spielfeld[x][y])
+        # Add the row number to the board string    
+        board_str += "| {}\n".format(y)
+    return board_str
+#function to send the playground to the client
+def sending(sock, spielfeld):
+    board_str = playground(spielfeld)
+    # Send the board string to the client
+    sock.send(board_str.encode())
+#function to receive the move from the client
+def receive_move(sock):
+    # Receive the move from the client
+    data = sock.recv(1024).decode()
+    # Parse the move to get the coordinates
+    x, y = map(int, data.split(','))
+    return x, y
 #function to get the player's move
 def move():
     global playing_aktiv
@@ -71,6 +90,16 @@ def check_for_draw(spielfeld):
             if spielfeld[x][y] == " ":
                 return False
     return True
+# Create a socket object
+server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server.bind((HOST, PORT))
+server.listen(1)
+print("Waiting for connection...")
+# Accept the connection
+client, addr = server.accept()
+print("Connected to {}".format(addr))
+#send the playground to the client
+sending(client, spielfeld)
 #game loop
 while playing_aktiv == True:
     playground(spielfeld)
@@ -84,10 +113,12 @@ while playing_aktiv == True:
         print("Player {} wins!".format(player))
         print("The game took {} rounds".format(round))
         playing_aktiv = False
+        sending(client, spielfeld)
     elif check_for_draw(spielfeld):
         playground(spielfeld=spielfeld)
         print("Draw!")
         print("The game took {} rounds".format(round))
         playing_aktiv = False
+        sending(client, spielfeld)
 print("Game Over!")
 print("Thanks for playing!")
