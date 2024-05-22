@@ -2,18 +2,24 @@ import socket
 import threading
 
 connected_clients = []
+client_usernames = {}
 
 def handle_client(client_socket):
-    username = client_socket.recv(1024).decode('utf-8')
+    username = None
     while True:
         try:
             message = client_socket.recv(1024).decode('utf-8')
-            if message == "/exit":
+            if message.startswith("/username "):  # If the message is a username message
+                username = message[10:]  # Extract the username
+                client_usernames[client_socket] = username
+                print(f"{username} ist dem Chat beigetreten")  # Display the username
+            elif message == "/exit":
                 connected_clients.remove(client_socket)
+                del client_usernames[client_socket]
                 client_socket.close()
                 break
             else:
-                print(f"Nachricht erhalten von {username}: {message}")
+                print(f"{username}: {message}")  # Removed the colon after the message
                 for client in connected_clients:
                     if client != client_socket:
                         client.send(f"{username}: {message}".encode('utf-8'))
@@ -26,7 +32,7 @@ def send_message():
     while True:
         message = input()
         for client in connected_clients:
-            client.send(f"{username}: {message}".encode('utf-8'))
+            client.send(f"{username} {message}".encode('utf-8'))
 
 def start_server():
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -39,9 +45,13 @@ def start_server():
 
     while True:
         client_socket, address = server_socket.accept()
+
+        connected_clients.append(client_socket)
+
         username = client_socket.recv(1024).decode('utf-8')  # Receive username from client
         connected_clients.append((client_socket, username))  # Store tuple of socket and username
         print(f"Neue Verbindung von {username} ({address[0]}:{address[1]})")  # Include username in message
+
         client_thread = threading.Thread(target=handle_client, args=(client_socket,))
         client_thread.start()
 start_server()
