@@ -1,7 +1,5 @@
 import socket
 
-import socket
-
 HOST = "10.10.218.64"
 PORT = 8080
 
