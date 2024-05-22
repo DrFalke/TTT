@@ -20,7 +20,7 @@ def handle_client(client_socket):
         except:
             client_socket.close()
             break
-####
+
 def send_message():
     username = input("Bitte geben Sie Ihren Benutzernamen ein: ")
     while True:
@@ -39,9 +39,9 @@ def start_server():
 
     while True:
         client_socket, address = server_socket.accept()
-        connected_clients.append(client_socket)
-        print(f"Neue Verbindung von {address[0]}:{address[1]}")
+        username = client_socket.recv(1024).decode('utf-8')  # Receive username from client
+        connected_clients.append((client_socket, username))  # Store tuple of socket and username
+        print(f"Neue Verbindung von {username} ({address[0]}:{address[1]})")  # Include username in message
         client_thread = threading.Thread(target=handle_client, args=(client_socket,))
         client_thread.start()
-
 start_server()
