@@ -1,5 +1,6 @@
 import socket
 import threading
+import time  # Import the time module
 
 def receive_messages(client_socket):
     while True:
@@ -16,7 +17,8 @@ def start_client():
     client_socket.connect(server_address)
 
     username = input("Bitte geben Sie Ihren Benutzernamen ein: ")
-    client_socket.send(username.encode('utf-8'))
+    time.sleep(1)  # Wait for 1 second before sending the username
+    client_socket.send(f"/username {username}".encode('utf-8'))  # Send the username with a special prefix
 
     receive_thread = threading.Thread(target=receive_messages, args=(client_socket,))
     receive_thread.start()
