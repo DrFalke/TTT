@@ -20,7 +20,7 @@ def handle_client(client_socket):
         except:
             client_socket.close()
             break
-
+####
 def send_message():
     username = input("Bitte geben Sie Ihren Benutzernamen ein: ")
     while True:
