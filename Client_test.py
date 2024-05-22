@@ -1,3 +1,9 @@
+"""
+First of all, you have to type in the IP address of the server you want to connect to.
+Then you have to type in your username.
+Thats it, you are now connected to the server and can send messages! :) 
+"""
+
 import socket
 import threading
 import time  # Import the time module
