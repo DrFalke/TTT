@@ -1,13 +1,17 @@
-#variablen for a 3x3 Matrix
+import socket
+#define the host and port
+HOST = '10.10.217.136'
+PORT = 8080
+#variablen for a 3x3 board
 x_dim = 3 
 y_dim = 3
-#initialize the playground
+#initialise the board
 spielfeld = [[" "]*y_dim for i in range(x_dim)]
-#initialize the round counter
+#initialise the round variable
 round = 1
-# Define the variable "player" to keep track of whose turn it is 
+#initialise the player variable   
 player = "" 
-# Define the variable "playing_aktiv" to keep track of whether the game is still active
+#Definieren der Playingaktiv varaible um
 playing_aktiv = True
 #create a 3x3 matrix to represent the board
 def playground(spielfeld):
@@ -78,12 +82,12 @@ while playing_aktiv == True:
     if check_for_win(spielfeld):
         playground(spielfeld=spielfeld)
         print("Player {} wins!".format(player))
-        print("Das spiel hat {} runden gedauert".format(round))
+        print("The game took {} rounds".format(round))
         playing_aktiv = False
     elif check_for_draw(spielfeld):
         playground(spielfeld=spielfeld)
-        print("Unentschieden!")
-        print("Das spiel hat {} runden gedauert".format(round))
+        print("Draw!")
+        print("The game took {} rounds".format(round))
         playing_aktiv = False
 print("Game Over!")
 print("Thanks for playing!")
