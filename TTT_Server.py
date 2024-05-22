@@ -14,7 +14,7 @@ y_dim = 3 #y dimension of the board
 playground_list = [[" "]*y_dim for i in range(x_dim)] #playground list
 round = 1 #round counter   
 #playground function
-def playground(playground_list):
+def playground():
     for j in range(x_dim):
         print(" {}".format(j),end="")
     print() 
@@ -24,7 +24,7 @@ def playground(playground_list):
         print("|",y)
 
 #check for win
-def check_for_win(playground_list):
+def check_for_win():
     # Check for horizontal win
     for x in range(0, 3):
         if playground_list[x][0] == playground_list[x][1] == playground_list[x][2] and playground_list[x][0] != ' ':
@@ -41,7 +41,7 @@ def check_for_win(playground_list):
     else:
         return False
 #check for draw
-def check_for_draw(playground_list):
+def check_for_draw():
     for x in range(0, 3):
         for y in range(0, 3):
             if playground_list[x][y] == " ":
@@ -81,11 +81,11 @@ while (round <= 9):
             #check for win
             if(check_for_win()):
                 print("Player {} has won the Game!".format(player))
-                playground(playground_list)
+                playground()
                 break
             elif(check_for_draw()):
                 print("The game is a draw!")
-                playground(playground_list)
+                playground()
                 break                   
         else:
             print("Fild already taken!")
