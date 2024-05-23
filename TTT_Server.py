@@ -12,7 +12,10 @@ conn, addr = server.accept() #accept the connection
 x_dim = 3 #x dimension of the board 
 y_dim = 3 #y dimension of the board
 playground_list = [[" "]*y_dim for i in range(x_dim)] #playground list
-round = 1 #round counter   
+round = 1 #round counter 
+
+player1 = "X" #starting player
+player2 = "O" #second player
 #playground function
 def playground():
     for j in range(x_dim):
@@ -22,7 +25,48 @@ def playground():
         for x in range(x_dim):
             print("|{}".format(playground_list[x][y]),end="")
         print("|",y)
+#make move function
+def make_move():
+    if (round % 2 == 0):
+        player = "X"
+        print("it's player {} turn!".format(player))
+        data = input("input the x-cord ->")
+        x = int(data)
+        data = bytes(data, 'utf-8')
+        conn.sendall(data)
+        data = input("input the y-cord ->")
+        y = int(data)
+        data = bytes(data, 'utf-8')
+        conn.sendall(data)
+    else:
+        player = "O"
+        print("players {} turn!".format(player))
+        data = conn.recv(1024)
+        print("The other player has chosen the x-cord -", repr(data).strip("b''"))
+        x = int(data)
+        data = conn.recv(1024)
+        print("The other player has chosen the y-cord -", repr(data).strip("b''"))
+        y = int(data)
 
+    #prove if the input is in the range of the playground
+    if (0 <= x < x_dim) and (0 <= y < y_dim):
+        if (playground_list[x][y] == " "):
+            #fild is free
+            playground_list[x][y] = player
+            round += 1
+            #check for win
+            if(check_for_win()):
+                playground()
+                print("Player {} has won the Game!".format(player))
+                break
+            elif(check_for_draw()):
+                playground()
+                print("The game is a draw!")
+                break                   
+        else:
+            print("Fild already taken!")
+    else:
+        print("The input is out of range!")
 #check for win
 def check_for_win():
     # Check for horizontal win
