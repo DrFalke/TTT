@@ -1,6 +1,6 @@
 import socket
 
-HOST = '127.0.0.1' #local host
+HOST = '10.10.217.160' #local host
 PORT = 61111 #port number
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #create a socket object
