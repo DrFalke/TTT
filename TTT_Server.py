@@ -80,12 +80,12 @@ while (round <= 9):
             round += 1
             #check for win
             if(check_for_win()):
-                print("Player {} has won the Game!".format(player))
                 playground()
+                print("Player {} has won the Game!".format(player))
                 break
             elif(check_for_draw()):
-                print("The game is a draw!")
                 playground()
+                print("The game is a draw!")
                 break                   
         else:
             print("Fild already taken!")
