@@ -1,3 +1,9 @@
+"""
+Das ist der Code für die beiden Clients des Tic-Tac-Toe-Spiels. 
+Da der Code für beide Clients identisch ist, braucht man nur einen Client-Code.
+Der "dumme" Client ist ein Client, der nur die GUI enthält und keine Spiellogik hat.
+Die Spiellogik wird vom Server bereitgestellt.
+"""
 import socket
 import pickle
 import tkinter as tk
