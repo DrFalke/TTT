@@ -1,93 +1,95 @@
 import socket
+import pickle
 
-HOST = '10.10.217.160' #local host
-PORT = 61111 #port number
+def make_a_move():
+    while(1):
+        x, y = request_coordinate()
+        if(field[y][x] == " "):
+            field[y][x] = player
+            break
+    if(check_win(x, y, player) == True):
+        field[0][0] = "W"
+        conn.sendall(pickle.dumps(field))
 
-server = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #create a socket object
-server.bind((HOST, PORT)) #bind to the port
-server.listen(1) #wait for client connection
-conn, addr = server.accept() #accept the connection
+def request_coordinate( ):
+    conn.sendall(pickle.dumps(field))
+    while(1):
+        try:
+            (x, y) = pickle.loads(conn.recv(1024))
+            break
+        except:
+            pass
+    return (int(x), int(y))
 
+def has_lost():
+    field[0][0] = "L"
+    conn.sendall(pickle.dumps(field))
 
-x_dim = 3 #x dimension of the board 
-y_dim = 3 #y dimension of the board
-playground_list = [[" "]*y_dim for i in range(x_dim)] #playground list
-round = 1 #round counter   
-#playground function
-def playground():
-    for j in range(x_dim):
+def tie():
+    field[0][0] = "T"
+    conn.sendall(pickle.dumps(field))
+
+def check_win(x_set, y_set, player):
+    win = True
+    for x in range (0, 3):
+        if not field[y_set][x] == player:
+            win = False
+            break
+    if win == True:
+        return True
+    win = True
+    for y in range (0, 3):
+        if not field[y][x_set] == player:
+            win = False
+    if win == True:
+        return True
+    if field[0][0]==player and field[1][1]==player and field[2][2]==player or field[0][2]==player and field[1][1]==player and field[2][0]==player:
+        return True
+    return False
+
+def  playgound():
+    for j in range(3):
         print(" {}".format(j),end="")
     print() 
-    for y in range(y_dim):
-        for x in range(x_dim):
-            print("|{}".format(playground_list[x][y]),end="")
-        print("|",y)
+    for row in field:
+        print(end="|")
+        for char in row:
+            print(char, end="|")
+        print()
 
-#check for win
-def check_for_win():
-    # Check for horizontal win
-    for x in range(0, 3):
-        if playground_list[x][0] == playground_list[x][1] == playground_list[x][2] and playground_list[x][0] != ' ':
-            return True
-    # Check for vertical win
-    for y in range(0, 3):
-        if playground_list[0][y] == playground_list[1][y] == playground_list[2][y] and playground_list[0][y] != ' ':
-            return True
-    # Check for diagonal win
-    if playground_list[0][0] == playground_list[1][1] == playground_list[2][2] and playground_list[0][0] != ' ':
-        return True
-    if playground_list[0][2] == playground_list[1][1] == playground_list[2][0] and playground_list[0][2] != ' ':
-        return True
-    else:
-        return False
-#check for draw
-def check_for_draw():
-    for x in range(0, 3):
-        for y in range(0, 3):
-            if playground_list[x][y] == " ":
-                return False
-    return True
+host = "127.0.0.1"
+port = 8111
 
-#game loop
-while (round <= 9):
-    playground()
-    if (round % 2 == 0):
-        player = "X"
-        print("it's player {} turn!".format(player))
-        data = input("input the x-cord ->")
-        x = int(data)
-        data = bytes(data, 'utf-8')
-        conn.sendall(data)
-        data = input("input the y-cord ->")
-        y = int(data)
-        data = bytes(data, 'utf-8')
-        conn.sendall(data)
-    else:
-        player = "O"
-        print("players {} turn!".format(player))
-        data = conn.recv(1024)
-        print("The other player has chosen the x-cord -", repr(data).strip("b''"))
-        x = int(data)
-        data = conn.recv(1024)
-        print("The other player has chosen the y-cord -", repr(data).strip("b''"))
-        y = int(data)
+global field
+field = [[" " for i in range(3)] for j in range(3)]
 
-    #prove if the input is in the range of the playground
-    if (0 <= x < x_dim) and (0 <= y < y_dim):
-        if (playground_list[x][y] == " "):
-            #fild is free
-            playground_list[x][y] = player
-            round += 1
-            #check for win
-            if(check_for_win()):
-                playground()
-                print("Player {} has won the Game!".format(player))
-                break
-            elif(check_for_draw()):
-                playground()
-                print("The game is a draw!")
-                break                   
-        else:
-            print("Fild already taken!")
-    else:
-        print("The input is out of range!")
+server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server.bind((host, port))
+server.listen(1)
+print("Waiting for connection...")
+conn, addr = server.accept()
+print("Connected!")
+
+player = 0
+moves = 0
+while(1):
+    make_a_move()
+    if(field[0][0] == "W"):
+        print("You have lost!")
+        break
+    moves += 1
+    if moves == 5:
+        tie()
+        print("You have tied!")
+        break
+    while(1):
+        playgound()
+        x = int(input("X: "))
+        y = int(input("Y: "))
+        if(field[y][x] == " "):
+            field[y][x] = "O"
+            break
+    if(check_win(x, y, "O") == True):
+        print("You have Won!")
+        has_lost()
+        break
