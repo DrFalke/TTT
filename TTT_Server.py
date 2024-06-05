@@ -36,18 +36,21 @@ def tie():
 # Function to check if the player has won
 def check_win(x_set, y_set, player):
     win = True
-    for x in range (0, 3):
+    # Check the row
+    for x in range (0, 3): 
         if not field[y_set][x] == player:
             win = False
             break
     if win == True:
         return True
     win = True
-    for y in range (0, 3):
+    # Check the column
+    for y in range (0, 3): 
         if not field[y][x_set] == player:
             win = False
     if win == True:
         return True
+    # Check the diagonal
     if field[0][0]==player and field[1][1]==player and field[2][2]==player or field[0][2]==player and field[1][1]==player and field[2][0]==player:
         return True
     return False
