@@ -1,1 +1,104 @@
+import socket
+import pickle
+import threading
+import tkinter as tk
+from tkinter import messagebox
+
+class TicTacToeClient:
+    def __init__(self, host='localhost', port=12345):
+        self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.client_socket.connect((host, port))
+        self.board = [[' ' for _ in range(3)] for _ in range(3)]
+        self.lock = threading.Lock()
+        self.my_turn = False
+
+        # Create tkinter window
+        self.root = tk.Tk()
+        self.root.title("Tic Tac Toe - Client")
+        self.buttons = [[None for _ in range(3)] for _ in range(3)]
+        self.create_board()
+        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
+
+        threading.Thread(target=self.receive_board).start()
+
+    def create_board(self):
+        for i in range(3):
+            for j in range(3):
+                button = tk.Button(self.root, text=' ', font=('normal', 40), width=5, height=2,
+                                   command=lambda x=i, y=j: self.make_move(x, y))
+                button.grid(row=i, column=j)
+                self.buttons[i][j] = button
+
+    def disable_buttons(self):
+        for row in self.buttons:
+            for button in row:
+                button.config(state=tk.DISABLED)
+
+    def enable_buttons(self):
+        for row in self.buttons:
+            for button in row:
+                if button['text'] == ' ':
+                    button.config(state=tk.NORMAL)
+
+    def make_move(self, x, y):
+        with self.lock:
+            if self.board[x][y] == ' ' and self.my_turn:
+                self.board[x][y] = 'O'
+                self.update_buttons()
+                self.send_move((x, y))
+                self.my_turn = False  # Set turn to False after making a move
+                self.disable_buttons()  # Disable buttons after the move
+
+    def update_buttons(self):
+        for i in range(3):
+            for j in range(3):
+                self.buttons[i][j]['text'] = self.board[i][j]
+
+    def send_move(self, move):
+        self.client_socket.send(pickle.dumps(move))
+
+    def receive_board(self):
+        while True:
+            try:
+                data = pickle.loads(self.client_socket.recv(1024))
+                with self.lock:
+                    if isinstance(data, str):
+                        messagebox.showinfo("Game Over Client", data)
+                        self.reset_game()
+                    else:
+                        self.board = data
+                        self.update_buttons()
+                        self.my_turn = True  # Set turn to True when board is updated
+                        self.enable_buttons()  # Enable buttons when it's client's turn
+            except:
+                self.client_socket.close()
+                return
+
+    def check_winner(self):
+        lines = self.board + [list(col) for col in zip(*self.board)] + [[self.board[i][i] for i in range(3)],
+                                                                        [self.board[i][2 - i] for i in range(3)]]
+        for line in lines:
+            if line == ['X', 'X', 'X']:
+                return 'X'
+            if line == ['O', 'O', 'O']:
+                return 'O'
+        if all(self.board[i][j] != ' ' for i in range(3) for j in range(3)):
+            return 'Draw'
+        return None
+
+    def end_game(self, winner):
+        message = f"WINNER {winner}" if winner in ['X', 'O'] else "DRAW"
+        messagebox.showinfo("Game Over Client", message)
+
+    def reset_game(self):
+        self.board = [[' ' for _ in range(3)] for _ in range(3)]
+        self.update_buttons()
+
+    def on_closing(self):
+        self.client_socket.close()
+        self.root.destroy()
+
+if __name__ == "__main__":
+    client = TicTacToeClient()
+    client.root.mainloop()
 
