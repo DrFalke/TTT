@@ -66,7 +66,7 @@ def  playgound():
             print(char, end="|")
         print()
 
-host = "127.0.0.1" # Get the local machine name
+host = "10.10.209.218" # Get the local machine name
 port = 8111 # Reserve a port for your service
 
 global field # Create a global variable field

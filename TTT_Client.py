@@ -10,7 +10,7 @@ def playground(field):
         print()
 
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # Create a socket object
-client.connect(('127.0.0.1', 8111)) # Connect to the server
+client.connect(('10.10.209.218', 8111)) # Connect to the server
 # Receive the initial game field
 while(1):
     try:

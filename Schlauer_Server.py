@@ -1,4 +1,5 @@
-"""Der Server berechnet sämtliche Züge und gibt das Ergebnis an den Client zurück. 
+"""
+Der Server berechnet sämtliche Züge und gibt das Ergebnis an den Client zurück. 
 Der Client ist nur für die Darstellung zuständig. Der Server ist der "Schlaue" und der Client der "Dumme".
 """
 
