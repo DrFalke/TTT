@@ -1,0 +1,118 @@
+import socket
+import pickle
+import threading
+import tkinter as tk
+from tkinter import messagebox
+
+class TicTacToeServer:
+    def __init__(self, host='localhost', port=12345):
+        self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server_socket.bind((host, port))
+        self.server_socket.listen(1)
+        self.client_socket = None
+        self.board = [[' ' for _ in range(3)] for _ in range(3)]
+        self.current_player = 'X'
+        self.lock = threading.Lock()
+
+        # Create tkinter window
+        self.root = tk.Tk()
+        self.root.title("Tic Tac Toe - Server")
+        self.buttons = [[None for _ in range(3)] for _ in range(3)]
+        self.create_board()
+        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
+
+    def create_board(self):
+        for i in range(3):
+            for j in range(3):
+                button = tk.Button(self.root, text=' ', font=('normal', 40), width=5, height=2,
+                                   command=lambda x=i, y=j: self.make_move(x, y))
+                button.grid(row=i, column=j)
+                self.buttons[i][j] = button
+
+    def make_move(self, x, y):
+        with self.lock:
+            if self.board[x][y] == ' ' and self.current_player == 'X':
+                self.board[x][y] = 'X'
+                self.current_player = 'O'
+                self.update_buttons()
+                self.send_board()
+                winner = self.check_winner()
+                if winner:
+                    self.end_game(winner)
+                    self.reset_game()
+                    self.send_board()
+
+    def update_buttons(self):
+        for i in range(3):
+            for j in range(3):
+                self.buttons[i][j]['text'] = self.board[i][j]
+
+    def start(self):
+        print("Server started, waiting for connection...")
+        self.client_socket, addr = self.server_socket.accept()
+        print(f"Client connected from {addr}")
+        threading.Thread(target=self.handle_client).start()
+        self.send_board()
+        self.root.mainloop()
+
+    def handle_client(self):
+        while True:
+            try:
+                move = pickle.loads(self.client_socket.recv(1024))
+                if move:
+                    with self.lock:
+                        if self.is_valid_move(move):
+                            self.handle_move(move)
+                            winner = self.check_winner()
+                            if winner:
+                                self.end_game(winner)
+                                self.reset_game()
+                            self.send_board()
+            except:
+                self.client_socket.close()
+                return
+
+    def send_board(self):
+        self.client_socket.send(pickle.dumps(self.board))
+
+    def handle_move(self, move):
+        x, y = move
+        self.board[x][y] = 'O'
+        self.current_player = 'X'
+        self.update_buttons()
+
+    def is_valid_move(self, move):
+        x, y = move
+        return self.board[x][y] == ' '
+
+    def check_winner(self):
+        lines = self.board + [list(col) for col in zip(*self.board)] + [[self.board[i][i] for i in range(3)],
+                                                                        [self.board[i][2 - i] for i in range(3)]]
+        for line in lines:
+            if line == ['X', 'X', 'X']:
+                return 'X'
+            if line == ['O', 'O', 'O']:
+                return 'O'
+        if all(self.board[i][j] != ' ' for i in range(3) for j in range(3)):
+            return 'Draw'
+        return None
+
+    def end_game(self, winner):
+        message = f"WINNER {winner}" if winner in ['X', 'O'] else "DRAW"
+        self.client_socket.send(pickle.dumps(message))
+        messagebox.showinfo("Game Over Server", message)
+
+    def reset_game(self):
+        self.board = [[' ' for _ in range(3)] for _ in range(3)]
+        self.current_player = 'X'
+        self.update_buttons()
+
+    def on_closing(self):
+        if self.client_socket:
+            self.client_socket.close()
+        self.server_socket.close()
+        self.root.destroy()
+
+if __name__ == "__main__":
+    server = TicTacToeServer()
+    server.start()
