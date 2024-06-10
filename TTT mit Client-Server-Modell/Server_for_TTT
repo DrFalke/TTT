@@ -1,3 +1,9 @@
+"""
+Das ist der Code für den Server.
+Der Server enthält die Spiellogik für die Berechnung des Gewinners und die Verwaltung des Spielfelds.	
+Der Server enthält auch die GUI für das Tic Tac Toe-Spiel.  
+"""
+
 import socket
 import pickle
 import threading
@@ -14,13 +20,14 @@ class TicTacToeServer:
         self.current_player = 'X'
         self.lock = threading.Lock()
 
-        # Create tkinter window
+        # tkinter Fenster erstellen
         self.root = tk.Tk()
         self.root.title("Tic Tac Toe - Server")
         self.buttons = [[None for _ in range(3)] for _ in range(3)]
         self.create_board()
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
 
+    # Erstellen des Spielfelds
     def create_board(self):
         for i in range(3):
             for j in range(3):
@@ -29,6 +36,7 @@ class TicTacToeServer:
                 button.grid(row=i, column=j)
                 self.buttons[i][j] = button
 
+    # Spielzug des Spielers
     def make_move(self, x, y):
         with self.lock:
             if self.board[x][y] == ' ' and self.current_player == 'X':
@@ -42,11 +50,13 @@ class TicTacToeServer:
                     self.reset_game()
                     self.send_board()
 
+    # Aktualisieren der Buttons
     def update_buttons(self):
         for i in range(3):
             for j in range(3):
                 self.buttons[i][j]['text'] = self.board[i][j]
 
+    # Starten des Servers
     def start(self):
         print("Server started, waiting for connection...")
         self.client_socket, addr = self.server_socket.accept()
@@ -55,6 +65,7 @@ class TicTacToeServer:
         self.send_board()
         self.root.mainloop()
 
+    # Client-Handler
     def handle_client(self):
         while True:
             try:
@@ -72,19 +83,23 @@ class TicTacToeServer:
                 self.client_socket.close()
                 return
 
+    # Senden des Spielfelds an den Client
     def send_board(self):
         self.client_socket.send(pickle.dumps(self.board))
 
+    # Spielzug des Servers
     def handle_move(self, move):
         x, y = move
         self.board[x][y] = 'O'
         self.current_player = 'X'
         self.update_buttons()
 
+    # Überprüfen, ob der Spielzug gültig ist
     def is_valid_move(self, move):
         x, y = move
         return self.board[x][y] == ' '
 
+    # Überprüfen, ob es einen Gewinner gibt
     def check_winner(self):
         lines = self.board + [list(col) for col in zip(*self.board)] + [[self.board[i][i] for i in range(3)],
                                                                         [self.board[i][2 - i] for i in range(3)]]
@@ -97,22 +112,26 @@ class TicTacToeServer:
             return 'Draw'
         return None
 
+    # Spiel beenden
     def end_game(self, winner):
         message = f"WINNER {winner}" if winner in ['X', 'O'] else "DRAW"
         self.client_socket.send(pickle.dumps(message))
         messagebox.showinfo("Game Over Server", message)
 
+    # Spiel zurücksetzen
     def reset_game(self):
         self.board = [[' ' for _ in range(3)] for _ in range(3)]
         self.current_player = 'X'
         self.update_buttons()
 
+    # Server schließen
     def on_closing(self):
         if self.client_socket:
             self.client_socket.close()
         self.server_socket.close()
         self.root.destroy()
 
+    # Server starten (Main Methode)
 if __name__ == "__main__":
     server = TicTacToeServer()
     server.start()
