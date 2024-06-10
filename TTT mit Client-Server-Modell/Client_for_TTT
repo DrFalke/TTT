@@ -1,3 +1,10 @@
+"""
+ Das ist der Code für den Client. 
+Der Client beinhaltet nur die GUI für das Spielfeld für Tic Tac Toe.
+Der Client kann mit dem Server kommunizieren und die Spielzüge an den Server senden.
+Für den Client wird keine Spiellogik benötigt, da der Server die Spiellogik enthält.   
+"""
+
 import socket
 import pickle
 import threading
@@ -12,7 +19,7 @@ class TicTacToeClient:
         self.lock = threading.Lock()
         self.my_turn = False
 
-        # Create tkinter window
+        # tkinter Fenster erstellen
         self.root = tk.Tk()
         self.root.title("Tic Tac Toe - Client")
         self.buttons = [[None for _ in range(3)] for _ in range(3)]
@@ -20,7 +27,7 @@ class TicTacToeClient:
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
 
         threading.Thread(target=self.receive_board).start()
-
+    # Erstellen des Spielfelds
     def create_board(self):
         for i in range(3):
             for j in range(3):
@@ -28,7 +35,8 @@ class TicTacToeClient:
                                    command=lambda x=i, y=j: self.make_move(x, y))
                 button.grid(row=i, column=j)
                 self.buttons[i][j] = button
-
+                
+    # Button dekativieren und aktivieren 
     def disable_buttons(self):
         for row in self.buttons:
             for button in row:
@@ -39,24 +47,28 @@ class TicTacToeClient:
             for button in row:
                 if button['text'] == ' ':
                     button.config(state=tk.NORMAL)
-
+                    
+    # Spielzug machen
     def make_move(self, x, y):
         with self.lock:
             if self.board[x][y] == ' ' and self.my_turn:
                 self.board[x][y] = 'O'
                 self.update_buttons()
                 self.send_move((x, y))
-                self.my_turn = False  # Set turn to False after making a move
-                self.disable_buttons()  # Disable buttons after the move
-
+                self.my_turn = False 
+                self.disable_buttons()  
+                
+    # Buttons aktualisieren
     def update_buttons(self):
         for i in range(3):
             for j in range(3):
                 self.buttons[i][j]['text'] = self.board[i][j]
-
+                
+    # Spielzug an Server senden
     def send_move(self, move):
         self.client_socket.send(pickle.dumps(move))
-
+        
+    # Spielbrett vom Server empfangen
     def receive_board(self):
         while True:
             try:
@@ -68,12 +80,13 @@ class TicTacToeClient:
                     else:
                         self.board = data
                         self.update_buttons()
-                        self.my_turn = True  # Set turn to True when board is updated
-                        self.enable_buttons()  # Enable buttons when it's client's turn
+                        self.my_turn = True  
+                        self.enable_buttons()  
             except:
                 self.client_socket.close()
                 return
 
+    # Gewinner überprüfen
     def check_winner(self):
         lines = self.board + [list(col) for col in zip(*self.board)] + [[self.board[i][i] for i in range(3)],
                                                                         [self.board[i][2 - i] for i in range(3)]]
@@ -86,18 +99,22 @@ class TicTacToeClient:
             return 'Draw'
         return None
 
+    # Spiel beenden
     def end_game(self, winner):
         message = f"WINNER {winner}" if winner in ['X', 'O'] else "DRAW"
         messagebox.showinfo("Game Over Client", message)
 
+    # Spiel zurücksetzen
     def reset_game(self):
         self.board = [[' ' for _ in range(3)] for _ in range(3)]
         self.update_buttons()
 
+    # Fenster schließen
     def on_closing(self):
         self.client_socket.close()
         self.root.destroy()
 
+# Client starten (Main Methode)
 if __name__ == "__main__":
     client = TicTacToeClient()
     client.root.mainloop()
