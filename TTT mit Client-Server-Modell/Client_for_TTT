@@ -78,10 +78,12 @@ class TicTacToeClient:
                         messagebox.showinfo("Game Over Client", data)
                         self.reset_game()
                     else:
-                        self.board = data
+                        self.board = data['board']
                         self.update_buttons()
-                        self.my_turn = True  
-                        self.enable_buttons()  
+                        if self.my_turn:
+                            self.enable_buttons()
+                        else:
+                            self.disable_buttons()
             except:
                 self.client_socket.close()
                 return
