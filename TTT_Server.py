@@ -1,5 +1,6 @@
 import socket # Import socket module
 import pickle # Import pickle module
+import os # Import os module
 
 # Function to check if the player has won
 def make_a_move():
@@ -65,8 +66,12 @@ def  playgound():
         for char in row:
             print(char, end="|")
         print()
+# Function to clear the screen
+def cls():
+    os.system('cls' if os.name=='nt' else 'clear')
 
-host = "10.10.209.218" # Get the local machine name
+
+host = "127.0.0.1" # Get the local machine name
 port = 8111 # Reserve a port for your service
 
 global field # Create a global variable field
@@ -79,7 +84,7 @@ print("Waiting for connection...") # Print a message
 conn, addr = server.accept() # Establish connection with client
 print("Connected!") # Print a message to show that the connection has been established
 
-player = 0 # Set the player to 0
+player = "X" # Set the player to 0
 moves = 0 # Set the moves to 0
 # The game loop
 while(1): 
@@ -96,6 +101,7 @@ while(1):
         break
     # Check if the player has lost
     while(1):
+        cls()
         playgound()
         x = int(input("X: "))
         y = int(input("Y: "))

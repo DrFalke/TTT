@@ -1,6 +1,6 @@
 import socket # Import socket module
 import pickle # Import pickle module
-
+import os # Import os module
 # Function to print the game field
 def playground(field):
     for row in field:
@@ -9,8 +9,11 @@ def playground(field):
             print(char, end="|")
         print()
 
+def cls():
+    os.system('cls' if os.name=='nt' else 'clear')
+
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # Create a socket object
-client.connect(('10.10.209.218', 8111)) # Connect to the server
+client.connect(('127.0.0.1', 8111)) # Connect to the server
 # Receive the initial game field
 while(1):
     try:
@@ -30,6 +33,7 @@ while(1):
         print("You have tied!")
         break
     # Print the game field
+    cls()
     playground(data)
     x = input("X: ") # Get the x coordinate
     y = input("Y: ") # Get the y coordinate
