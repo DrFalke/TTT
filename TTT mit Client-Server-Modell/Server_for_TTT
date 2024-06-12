@@ -9,22 +9,30 @@ class TicTacToeServer:
         self.master.title("Tic Tac Toe Server")
         self.create_widgets()
         self.initialize_game()
+         # Sock_Stream ist ein TCP-Socket und wird für die Kommunikation zwischen Client und Server verwendet
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server_socket.bind(('127.0.0.1', 65432))
+        self.server_socket.bind(('localhost', 8080))
+        # max. ein Client 
         self.server_socket.listen(1)
+        # ein neuer Thread wird gestartet, um auf den Client zu warten
         Thread(target=self.wait_for_client).start()
         
     def create_widgets(self):
+        # Labmda Funktionen werden verwendet, um die Indexe der Buttons zu übergeben
         self.buttons = [tk.Button(self.master, text=' ', font='Arial 20', width=5, height=2,
                                   command=lambda i=i: self.make_move(i)) for i in range(9)]
         for i, button in enumerate(self.buttons):
+            # 3x3 Raster 
             row, col = divmod(i, 3)
+            # Buttons für den Raster einfügen 
             button.grid(row=row, column=col)
         self.status_label = tk.Label(self.master, text="Waiting for client to connect...")
         self.status_label.grid(row=3, column=0, columnspan=3)
+        # Button für die Möglichkeit ein neues Spiel zu starten 
         self.reset_button = tk.Button(self.master, text="New Game", state=tk.DISABLED, command=self.reset_game)
         self.reset_button.grid(row=4, column=0, columnspan=3)
 
+    # neues Spiel initialisieren 
     def initialize_game(self):
         self.board = [' ' for _ in range(9)]
         self.current_turn = 'X'
@@ -33,10 +41,12 @@ class TicTacToeServer:
     def wait_for_client(self):
         self.client_socket, self.client_address = self.server_socket.accept()
         self.status_label.config(text=f"Client connected from {self.client_address}")
+        # neuer Thread für den Empfang von Daten vom Client 
         Thread(target=self.receive_state).start()
         self.update_buttons()
 
     def make_move(self, index):
+        # Wenn das Feld leer ist, kann "X" einen Zug machen
         if self.board[index] == ' ' and self.current_turn == 'X':
             self.board[index] = 'X'
             if self.check_winner('X'):
@@ -48,9 +58,12 @@ class TicTacToeServer:
             self.send_state()
 
     def update_buttons(self):
+        # i ist der Index des Buttons und button ist der Button-Objekt
+        # Wenn das Feld leer ist, kann der Button betätigt werden	
         for i, button in enumerate(self.buttons):
             button.config(text=self.board[i], state=tk.DISABLED if self.board[i] != ' ' else tk.NORMAL)
         if self.winner:
+            # Wenn es einen Gewinner gibt, wird der Status aktualisiert und die Buttons deaktiviert
             self.status_label.config(text=f"Winner: {self.winner}" if self.winner != 'Draw' else "It's a draw!")
             for button in self.buttons:
                 button.config(state=tk.DISABLED)
@@ -63,8 +76,10 @@ class TicTacToeServer:
             data = self.client_socket.recv(4096)
             if not data:
                 break
+            # Daten werden von Bits, in den ursprünglichen Python-Wert umgewandelt
             move = pickle.loads(data)
             if move == 'reset':
+                # Speil wird zurückgesetzt, wenn ein neues Spiel gestartet wird 
                 self.initialize_game()
             else:
                 self.process_move(move)
@@ -72,19 +87,22 @@ class TicTacToeServer:
 
     def process_move(self, move):
         index, player = move
+        # Überprüfung ob das Feld leer ist und ob der Spieler an der Reihe ist
         if self.board[index] == ' ' and player == self.current_turn:
             self.board[index] = player
             if self.check_winner(player):
                 self.winner = player
             elif self.check_draw():
                 self.winner = 'Draw'
+            # Spielerwechsel
             self.current_turn = 'X'
-            
+    # Gewinnkombis         
     def check_winner(self, player):
         win_conditions = [(0, 1, 2), (3, 4, 5), (6, 7, 8),
                           (0, 3, 6), (1, 4, 7), (2, 5, 8),
                           (0, 4, 8), (2, 4, 6)]
         for condition in win_conditions:
+        # Wenn alle Felder in einer Gewinnkombi gleich sind, gibt es einen Gewinner
             if all(self.board[i] == player for i in condition):
                 return True
         return False
@@ -94,6 +112,7 @@ class TicTacToeServer:
 
     def send_state(self):
         state = (self.board, self.current_turn, self.winner)
+        # Daten in Bitsstream umwandeln
         self.client_socket.sendall(pickle.dumps(state))
 
     def reset_game(self):
@@ -102,7 +121,8 @@ class TicTacToeServer:
         self.status_label.config(text="Current turn: X")
         self.reset_button.config(state=tk.DISABLED)
         self.send_state()
-
+        
+# Main-Methode zum sicheren Starten 
 if __name__ == "__main__":
     root = tk.Tk()
     server = TicTacToeServer(root)
