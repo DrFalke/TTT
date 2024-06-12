@@ -1,3 +1,11 @@
+"""
+Tic Tac Toe Client
+Der Client beinhaltet keine Spiellogik, deswegen wird er als "dummer Client" bezeichent.
+Die Daten des Clients werden dem Server geschickt und der Server wertet diese aus.
+Dies ist nötig da sonst die GUI beider Spieler nicht aktualisiert werden kann.
+"""
+
+
 import socket
 # pickle wird verwendet, um die Daten zu serialisieren und zu deserialisieren
 import pickle
