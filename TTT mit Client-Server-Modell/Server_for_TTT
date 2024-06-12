@@ -1,5 +1,16 @@
+"""
+Tic Tac Toe Server:
+Der Server beinhaltet die Spiellogik von Tic Tac Toe.
+Das bedeutet, dass der Server die Spielzüge überprüft und den Gewinner ermittelt.
+Dadurch das der Client keine Spiellogik hat, müssen die Spieldaten zum Server gesendet werden.
+Dieser wertet die Daten aus und schickt die Ergebnisse dem Client zurück.
+Dies ist nötig damit auf beiden Seiden die GUI aktualisiert wird und der Spielstand synchron ist.
+"""
+
+
 import socket
 import pickle
+# pickle wird verwendet, um die Daten zu serialisieren und zu deserialisieren
 import tkinter as tk
 from threading import Thread
 
