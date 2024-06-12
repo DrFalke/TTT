@@ -22,7 +22,7 @@ class TicTacToeServer:
         self.initialize_game()
          # Sock_Stream ist ein TCP-Socket und wird für die Kommunikation zwischen Client und Server verwendet
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server_socket.bind(('localhost', 8080))
+        self.server_socket.bind(('localhost', 123456))
         # max. ein Client 
         self.server_socket.listen(1)
         # ein neuer Thread wird gestartet, um auf den Client zu warten
