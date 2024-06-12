@@ -1,137 +1,109 @@
-"""
-Das ist der Code für den Server.
-Der Server enthält die Spiellogik für die Berechnung des Gewinners und die Verwaltung des Spielfelds.	
-Der Server enthält auch die GUI für das Tic Tac Toe-Spiel.  
-"""
-
 import socket
 import pickle
-import threading
 import tkinter as tk
-from tkinter import messagebox
+from threading import Thread
 
 class TicTacToeServer:
-    def __init__(self, host='localhost', port=12345):
+    def __init__(self, master):
+        self.master = master
+        self.master.title("Tic Tac Toe Server")
+        self.create_widgets()
+        self.initialize_game()
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server_socket.bind((host, port))
+        self.server_socket.bind(('127.0.0.1', 65432))
         self.server_socket.listen(1)
-        self.client_socket = None
-        self.board = [[' ' for _ in range(3)] for _ in range(3)]
-        self.current_player = 'X'
-        self.lock = threading.Lock()
+        Thread(target=self.wait_for_client).start()
+        
+    def create_widgets(self):
+        self.buttons = [tk.Button(self.master, text=' ', font='Arial 20', width=5, height=2,
+                                  command=lambda i=i: self.make_move(i)) for i in range(9)]
+        for i, button in enumerate(self.buttons):
+            row, col = divmod(i, 3)
+            button.grid(row=row, column=col)
+        self.status_label = tk.Label(self.master, text="Waiting for client to connect...")
+        self.status_label.grid(row=3, column=0, columnspan=3)
+        self.reset_button = tk.Button(self.master, text="New Game", state=tk.DISABLED, command=self.reset_game)
+        self.reset_button.grid(row=4, column=0, columnspan=3)
 
-        # tkinter Fenster erstellen
-        self.root = tk.Tk()
-        self.root.title("Tic Tac Toe - Server")
-        self.buttons = [[None for _ in range(3)] for _ in range(3)]
-        self.create_board()
-        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
+    def initialize_game(self):
+        self.board = [' ' for _ in range(9)]
+        self.current_turn = 'X'
+        self.winner = None
 
-    # Erstellen des Spielfelds
-    def create_board(self):
-        for i in range(3):
-            for j in range(3):
-                button = tk.Button(self.root, text=' ', font=('normal', 40), width=5, height=2,
-                                   command=lambda x=i, y=j: self.make_move(x, y))
-                button.grid(row=i, column=j)
-                self.buttons[i][j] = button
+    def wait_for_client(self):
+        self.client_socket, self.client_address = self.server_socket.accept()
+        self.status_label.config(text=f"Client connected from {self.client_address}")
+        Thread(target=self.receive_state).start()
+        self.update_buttons()
 
-    # Spielzug des Spielers
-    def make_move(self, x, y):
-        with self.lock:
-            if self.board[x][y] == ' ' and self.current_player == 'X':
-                self.board[x][y] = 'X'
-                self.current_player = 'O'
-                self.update_buttons()
-                self.send_board()
-                winner = self.check_winner()
-                if winner:
-                    self.end_game(winner)
-                    self.reset_game()
-                    self.send_board()
+    def make_move(self, index):
+        if self.board[index] == ' ' and self.current_turn == 'X':
+            self.board[index] = 'X'
+            if self.check_winner('X'):
+                self.winner = 'X'
+            elif self.check_draw():
+                self.winner = 'Draw'
+            self.current_turn = 'O'
+            self.update_buttons()
+            self.send_state()
 
-    # Aktualisieren der Buttons
     def update_buttons(self):
-        for i in range(3):
-            for j in range(3):
-                self.buttons[i][j]['text'] = self.board[i][j]
+        for i, button in enumerate(self.buttons):
+            button.config(text=self.board[i], state=tk.DISABLED if self.board[i] != ' ' else tk.NORMAL)
+        if self.winner:
+            self.status_label.config(text=f"Winner: {self.winner}" if self.winner != 'Draw' else "It's a draw!")
+            for button in self.buttons:
+                button.config(state=tk.DISABLED)
+            self.reset_button.config(state=tk.NORMAL)
+        else:
+            self.status_label.config(text=f"Current turn: {self.current_turn}")
 
-    # Starten des Servers
-    def start(self):
-        print("Server started, waiting for connection...")
-        self.client_socket, addr = self.server_socket.accept()
-        print(f"Client connected from {addr}")
-        threading.Thread(target=self.handle_client).start()
-        self.send_board()
-        self.root.mainloop()
-
-    # Client-Handler
-    def handle_client(self):
+    def receive_state(self):
         while True:
-            try:
-                move = pickle.loads(self.client_socket.recv(1024))
-                if move:
-                    with self.lock:
-                        if self.is_valid_move(move):
-                            self.handle_move(move)
-                            winner = self.check_winner()
-                            if winner:
-                                self.end_game(winner)
-                                self.reset_game()
-                            self.send_board()
-            except:
-                self.client_socket.close()
-                return
+            data = self.client_socket.recv(4096)
+            if not data:
+                break
+            move = pickle.loads(data)
+            if move == 'reset':
+                self.initialize_game()
+            else:
+                self.process_move(move)
+            self.update_buttons()
 
-    # Senden des Spielfelds an den Client
-    def send_board(self):
-        self.client_socket.send(pickle.dumps(self.board))
+    def process_move(self, move):
+        index, player = move
+        if self.board[index] == ' ' and player == self.current_turn:
+            self.board[index] = player
+            if self.check_winner(player):
+                self.winner = player
+            elif self.check_draw():
+                self.winner = 'Draw'
+            self.current_turn = 'X'
+            
+    def check_winner(self, player):
+        win_conditions = [(0, 1, 2), (3, 4, 5), (6, 7, 8),
+                          (0, 3, 6), (1, 4, 7), (2, 5, 8),
+                          (0, 4, 8), (2, 4, 6)]
+        for condition in win_conditions:
+            if all(self.board[i] == player for i in condition):
+                return True
+        return False
 
-    # Spielzug des Servers
-    def handle_move(self, move):
-        x, y = move
-        self.board[x][y] = 'O'
-        self.current_player = 'X'
-        self.update_buttons()
+    def check_draw(self):
+        return all(space != ' ' for space in self.board)
 
-    # Überprüfen, ob der Spielzug gültig ist
-    def is_valid_move(self, move):
-        x, y = move
-        return self.board[x][y] == ' '
+    def send_state(self):
+        state = (self.board, self.current_turn, self.winner)
+        self.client_socket.sendall(pickle.dumps(state))
 
-    # Überprüfen, ob es einen Gewinner gibt
-    def check_winner(self):
-        lines = self.board + [list(col) for col in zip(*self.board)] + [[self.board[i][i] for i in range(3)],
-                                                                        [self.board[i][2 - i] for i in range(3)]]
-        for line in lines:
-            if line == ['X', 'X', 'X']:
-                return 'X'
-            if line == ['O', 'O', 'O']:
-                return 'O'
-        if all(self.board[i][j] != ' ' for i in range(3) for j in range(3)):
-            return 'Draw'
-        return None
-
-    # Spiel beenden
-    def end_game(self, winner):
-        message = f"WINNER {winner}" if winner in ['X', 'O'] else "DRAW"
-        self.client_socket.send(pickle.dumps(message))
-        messagebox.showinfo("Game Over Server", message)
-
-    # Spiel zurücksetzen
     def reset_game(self):
-        self.board = [[' ' for _ in range(3)] for _ in range(3)]
-        self.current_player = 'X'
+        self.initialize_game()
         self.update_buttons()
+        self.status_label.config(text="Current turn: X")
+        self.reset_button.config(state=tk.DISABLED)
+        self.send_state()
 
-    # Server schließen
-    def on_closing(self):
-        if self.client_socket:
-            self.client_socket.close()
-        self.server_socket.close()
-        self.root.destroy()
-
-    # Server starten (Main Methode)
 if __name__ == "__main__":
-    server = TicTacToeServer()
-    server.start()
+    root = tk.Tk()
+    server = TicTacToeServer(root)
+    root.mainloop()
