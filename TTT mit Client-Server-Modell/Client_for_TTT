@@ -1,5 +1,5 @@
 """
- Das ist der Code für den Client. 
+Das ist der Code für den Client. 
 Der Client beinhaltet nur die GUI für das Spielfeld für Tic Tac Toe.
 Der Client kann mit dem Server kommunizieren und die Spielzüge an den Server senden.
 Für den Client wird keine Spiellogik benötigt, da der Server die Spiellogik enthält.   
