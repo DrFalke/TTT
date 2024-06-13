@@ -1,8 +1,15 @@
 """
+<<<<<<< HEAD
+Das ist der Code für den Client. 
+Der Client beinhaltet nur die GUI für das Spielfeld für Tic Tac Toe.
+Der Client kann mit dem Server kommunizieren und die Spielzüge an den Server senden.
+Für den Client wird keine Spiellogik benötigt, da der Server die Spiellogik enthält.   
+=======
 Tic Tac Toe Client
 Der Client beinhaltet keine Spiellogik, deswegen wird er als "dummer Client" bezeichent.
 Die Daten des Clients werden dem Server geschickt und der Server wertet diese aus.
 Dies ist nötig da sonst die GUI beider Spieler nicht aktualisiert werden kann.
+>>>>>>> f6b6c1dd59e6fb947b62744b6d6af895ee7a82ee
 """
 
 
@@ -28,7 +35,7 @@ class TicTacToeClient:
     def create_widgets(self):
         # Labmda Funktionen werden verwendet, um die Indexe der Buttons zu übergeben
         self.buttons = [tk.Button(self.master, text=' ', font='Arial 20', width=5, height=2,
-                                  command=lambda i=i: self.make_move(i)) for i in range(9)]
+                                command=lambda i=i: self.make_move(i)) for i in range(9)]
         for i, button in enumerate(self.buttons):
             # 3x3 Raster
             row, col = divmod(i, 3)
