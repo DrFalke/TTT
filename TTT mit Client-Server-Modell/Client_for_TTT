@@ -54,11 +54,12 @@ class TicTacToeClient:
         self.winner = None
 
     def make_move(self, index):
-        # Wenn Feld leer, dann Spielzug durchführen 
+    # Wenn Feld leer, dann Spielzug durchführen
         if self.board[index] == ' ' and self.current_turn == 'O':
             self.board[index] = 'O'
             # Spielzug an Server senden "pickle.dumps"
             self.client_socket.sendall(pickle.dumps((index, 'O')))
+            self.current_turn = 'X'
             self.update_buttons()
 
     def update_buttons(self):
