@@ -10,38 +10,30 @@ Dies ist nötig damit auf beiden Seiden die GUI aktualisiert wird und der Spiels
 
 import socket
 import pickle
-# pickle wird verwendet, um die Daten zu serialisieren und zu deserialisieren
 import tkinter as tk
 from threading import Thread
-
+ 
 class TicTacToeServer:
     def __init__(self, master):
         self.master = master
         self.master.title("Tic Tac Toe Server")
         self.create_widgets()
         self.initialize_game()
-         # Sock_Stream ist ein TCP-Socket und wird für die Kommunikation zwischen Client und Server verwendet
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server_socket.bind(('localhost', 123456))
-        # max. ein Client 
+        self.server_socket.bind(('localhost', 8080))
         self.server_socket.listen(1)
-        # ein neuer Thread wird gestartet, um auf den Client zu warten
         Thread(target=self.wait_for_client).start()
-        
+       
     def create_widgets(self):
-        # Labmda Funktionen werden verwendet, um die Indexe der Buttons zu übergeben
         self.buttons = [tk.Button(self.master, text=' ', font='Arial 20', width=5, height=2,
                                 command=lambda i=i: self.make_move(i)) for i in range(9)]
         for i, button in enumerate(self.buttons):
-            # 3x3 Raster 
             row, col = divmod(i, 3)
-            # Buttons für den Raster einfügen 
             button.grid(row=row, column=col)
         self.status_label = tk.Label(self.master, text="Waiting for client to connect...")
         self.status_label.grid(row=3, column=0, columnspan=3)
-        # Button für die Möglichkeit ein neues Spiel zu starten 
         self.reset_button = tk.Button(self.master, text="New Game", state=tk.DISABLED, command=self.reset_game)
-        self.reset_button.grid(row=4, column=0, columnspan=3)
+        self.reset_button.grid(row=
 
     # neues Spiel initialisieren 
     def initialize_game(self):
@@ -69,7 +61,7 @@ class TicTacToeServer:
             self.send_state()
 
     def update_buttons(self):
-        # i ist der Index des Buttons und button ist der Button-Objekt
+        # i ist der Index des Buttons und button ist das Button-Objekt
         # Wenn das Feld leer ist, kann der Button betätigt werden	
         for i, button in enumerate(self.buttons):
             button.config(text=self.board[i], state=tk.DISABLED if self.board[i] != ' ' else tk.NORMAL)
@@ -132,7 +124,6 @@ class TicTacToeServer:
         self.status_label.config(text="Current turn: X")
         self.reset_button.config(state=tk.DISABLED)
         self.send_state()
-        
 # Main-Methode zum sicheren Starten 
 if __name__ == "__main__":
     root = tk.Tk()
