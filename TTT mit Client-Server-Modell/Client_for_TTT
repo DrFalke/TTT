@@ -18,7 +18,7 @@ import socket
 import pickle
 import tkinter as tk
 from threading import Thread
-
+# Client Klasse
 class TicTacToeClient:
     def __init__(self, master):
         self.master = master
@@ -31,7 +31,7 @@ class TicTacToeClient:
         Thread(target=self.receive_state).start()
         # leeres Spielfeld erstellen
         self.initialize_game()
-
+    # GUI erstellen
     def create_widgets(self):
         # Labmda Funktionen werden verwendet, um die Indexe der Buttons zu übergeben
         self.buttons = [tk.Button(self.master, text=' ', font='Arial 20', width=5, height=2,
@@ -52,7 +52,7 @@ class TicTacToeClient:
         self.board = [' ' for _ in range(9)]
         self.current_turn = None
         self.winner = None
-
+    # Spielzug durchführen
     def make_move(self, index):
     # Wenn Feld leer, dann Spielzug durchführen
         if self.board[index] == ' ' and self.current_turn == 'O':
@@ -62,6 +62,7 @@ class TicTacToeClient:
             self.current_turn = 'X'
             self.update_buttons()
 
+    # Buttons aktualisieren
     def update_buttons(self):
         # Alle Felder durchlaufen und Text auf den Wert im Spielbrett [i] setzen
         for i, button in enumerate(self.buttons):
@@ -75,6 +76,7 @@ class TicTacToeClient:
             for button in self.buttons:
                 button.config(state=tk.DISABLED)
 
+    # Spielzustand empfangen
     def receive_state(self):
         while True:
             data = self.client_socket.recv(1024)
@@ -89,7 +91,7 @@ class TicTacToeClient:
             else:
                 self.update_state(state)
             self.update_buttons()
-
+    # Spielzustand aktualisieren 
     def update_state(self, state):
         self.board, self.current_turn, self.winner = state
         for i, button in enumerate(self.buttons):
@@ -104,6 +106,8 @@ class TicTacToeClient:
         else:
             self.reset_button.config(state=tk.NORMAL)
             self.update_buttons()
+    
+    # Spiel zurücksetzen 
     def reset_game(self):
         self.initialize_game()
         self.update_buttons()
@@ -111,7 +115,7 @@ class TicTacToeClient:
         self.reset_button.config(state=tk.DISABLED)
         self.client_socket.sendall(pickle.dumps('reset'))
         
-# Main Methode für sicheren Start
+# Hauptprogramm
 if __name__ == "__main__":
     root = tk.Tk()
     client = TicTacToeClient(root)
