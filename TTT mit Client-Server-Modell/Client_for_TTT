@@ -1,122 +1,101 @@
 """
-<<<<<<< HEAD
-Das ist der Code für den Client. 
+Tic Tac Toe Client:
+Das ist der Code für den Client.                                                        
 Der Client beinhaltet nur die GUI für das Spielfeld für Tic Tac Toe.
 Der Client kann mit dem Server kommunizieren und die Spielzüge an den Server senden.
 Für den Client wird keine Spiellogik benötigt, da der Server die Spiellogik enthält.   
-=======
-Tic Tac Toe Client
-Der Client beinhaltet keine Spiellogik, deswegen wird er als "dummer Client" bezeichent.
-Die Daten des Clients werden dem Server geschickt und der Server wertet diese aus.
-Dies ist nötig da sonst die GUI beider Spieler nicht aktualisiert werden kann.
->>>>>>> f6b6c1dd59e6fb947b62744b6d6af895ee7a82ee
 """
 
 
-import socket 
-# pickle wird verwendet, um die Daten zu serialisieren und zu deserialisieren
-import pickle
+import socket
+import pickle # pickle für Datenübertragung
 import tkinter as tk
 from threading import Thread
-# Client Klasse
+
 class TicTacToeClient:
     def __init__(self, master):
-        self.master = master
+        self.master = master # Hauptfenster
         self.master.title("Tic Tac Toe Client")
-        self.create_widgets()
-        # Sock_Stream ist ein TCP-Socket und wird für die Kommunikation zwischen Client und Server verwendet
-        self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.client_socket.connect(('localhost', 8080))
-        # Ein neuer Thread wird gestartet, um die Spielzustände zu empfangen
-        Thread(target=self.receive_state).start()
-        # leeres Spielfeld erstellen
-        self.initialize_game()
-    # GUI erstellen
+        self.create_widgets() # Erstellt die Widgets (Buttons, Label, etc.)
+        self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # Sock_Stream für TCP
+        self.client_socket.connect(('localhost', 8080)) 
+        Thread(target=self.receive_state).start() # Startet einen neuen Thread zum Empfangen des Spielzustands
+        self.initialize_game() # Initialisiert das Spiel
+
     def create_widgets(self):
-        # Labmda Funktionen werden verwendet, um die Indexe der Buttons zu übergeben
-        self.buttons = [tk.Button(self.master, text=' ', font='Arial 20', width=5, height=2,
+        # Erstellt die Buttons für das Spielfeld
+        self.buttons = [tk.Button(self.master, text=' ', font='Arial 20', width=8, height=4,
                                 command=lambda i=i: self.make_move(i)) for i in range(9)]
         for i, button in enumerate(self.buttons):
-            # 3x3 Raster
-            row, col = divmod(i, 3)
-            # Buttons in das Raster einfügen
-            button.grid(row=row, column=col)
-        self.status_label = tk.Label(self.master, text="Connecting to server...")
+            row, col = divmod(i, 3) # Buttons richtig platzieren (3x3 Raster)
+            button.grid(row=row, column=col) 
+        self.status_label = tk.Label(self.master, text="Connecting to server...", font=('Arial', 14)) 
         self.status_label.grid(row=3, column=0, columnspan=3)
-        # Button für erneutes Spiel 
-        self.reset_button = tk.Button(self.master, text="New Game", state=tk.DISABLED, command=self.reset_game)
+        self.reset_button = tk.Button(self.master, text="Reset", font=('Arial', 10), state=tk.DISABLED, command=self.reset_game, width=7, height=2) 
         self.reset_button.grid(row=4, column=0, columnspan=3)
 
-    # neues Spiel intialisieren
     def initialize_game(self):
-        self.board = [' ' for _ in range(9)]
-        self.current_turn = None
-        self.winner = None
-    # Spielzug durchführen
-    def make_move(self, index):
-    # Wenn Feld leer, dann Spielzug durchführen
-        if self.board[index] == ' ' and self.current_turn == 'O':
-            self.board[index] = 'O'
-            # Spielzug an Server senden "pickle.dumps"
-            self.client_socket.sendall(pickle.dumps((index, 'O')))
-            self.current_turn = 'X'
-            self.update_buttons()
+        self.board = [' ' for _ in range(9)] # leeres Spielfeld ausgeben
+        self.current_turn = None 
+        self.winner = None 
+        self.winning_combination = [] # Gewinnkombinationen
+        for button in self.buttons:
+            button.config(text=' ', bg='SystemButtonFace', state=tk.NORMAL) # Setzt die farbigen Button zurück
 
-    # Buttons aktualisieren
+    def make_move(self, index):
+        if self.board[index] == ' ' and self.current_turn == 'O': # Überprüft, ob das Feld leer ist und ob 'O' an der Reihe ist
+            self.board[index] = 'O' # Setzt das Feld auf 'O'
+            self.client_socket.sendall(pickle.dumps((index, 'O'))) 
+            self.current_turn = 'X' # Wechselt den Spieler zu 'X'
+            self.update_buttons() # Aktualisiert die Buttons
+
     def update_buttons(self):
-        # Alle Felder durchlaufen und Text auf den Wert im Spielbrett [i] setzen
         for i, button in enumerate(self.buttons):
-            button.config(text=self.board[i], state=tk.DISABLED if self.board[i] != ' ' else tk.NORMAL)
-            # Überprüfen, ob "O" am Zug ist + gibt es einen Gewinner?
-        if self.current_turn == 'O' and not self.winner:
+            button.config(text=self.board[i], state=tk.DISABLED if self.board[i] != ' ' else tk.NORMAL) # Aktualisiert den Text und den Status der Buttons
+        if self.current_turn == 'O' and not self.winner: # Überprüft, ob 'O' am Zug ist und es keinen Gewinner gibt
             for i, button in enumerate(self.buttons):
                 if self.board[i] == ' ':
-                    button.config(state=tk.NORMAL)
+                    button.config(state=tk.NORMAL) # Aktiviert die Buttons, die leer sind
         else:
             for button in self.buttons:
-                button.config(state=tk.DISABLED)
+                button.config(state=tk.DISABLED) # Deaktiviert alle Buttons
 
-    # Spielzustand empfangen
     def receive_state(self):
         while True:
-            data = self.client_socket.recv(1024)
-            # Verbindung abbrechen, wenn keine Daten mehr empfangen werden
+            data = self.client_socket.recv(4096) # Empfängt Daten vom Server
             if not data:
                 break
-            # ursprünglichen Python-Wert wiederherstellen
-            state = pickle.loads(data)
-            # Spiel zurücksetzen wenn "New Game" gedrückt wird 
-            if state == 'reset':
-                self.initialize_game()
+            state = pickle.loads(data) # Lädt den empfangenen Spielzustand
+            if state == 'reset': 
+                self.initialize_game() # Initialisiert das Spiel neu
             else:
-                self.update_state(state)
-            self.update_buttons()
-    # Spielzustand aktualisieren 
+                self.update_state(state) 
+            self.update_buttons() # Aktualisiert die Buttons
+
     def update_state(self, state):
-        self.board, self.current_turn, self.winner = state
+        self.board, self.current_turn, self.winner, self.winning_combination = state # Setzt den empfangenen Spielzustand
         for i, button in enumerate(self.buttons):
-            button.config(text=self.board[i])
-        # Label wird aktualisiert, um den aktuellen Spielzustand anzuzeigen
-        self.status_label.config(text=f"Current turn: {self.current_turn}")
+            button.config(text=self.board[i]) # Aktualisiert den Text der Buttons
+        self.status_label.config(text=f"Current turn: {self.current_turn}", font=('Arial', 13, 'normal')) # Aktualisiert das Statuslabel
         if self.winner:
-            self.status_label.config(text=f"Winner: {self.winner}" if self.winner != 'Draw' else "It's a draw!")
+            self.status_label.config(text=f"Winner: {self.winner}", font=('Arial', 20, 'bold')) if self.winner != 'Draw' else self.status_label.config(text="It's a draw!", font=('Arial', 10, 'bold'))
             for button in self.buttons:
-                button.config(state=tk.DISABLED)
-            self.reset_button.config(state=tk.NORMAL)  
+                button.config(state=tk.DISABLED) # Deaktiviert alle Buttons
+            for index in self.winning_combination:
+                self.buttons[index].config(bg='green') # Markiert die Gewinnkombination grün
+            self.reset_button.config(state=tk.NORMAL) # Aktiviert den Reset-Button
         else:
-            self.reset_button.config(state=tk.NORMAL)
-            self.update_buttons()
-    
-    # Spiel zurücksetzen 
+            self.reset_button.config(state=tk.NORMAL) # Aktiviert den Reset-Button
+            self.update_buttons() # Aktualisiert die Buttons
+
     def reset_game(self):
-        self.initialize_game()
-        self.update_buttons()
-        self.status_label.config(text="Connecting to server...")
-        self.reset_button.config(state=tk.DISABLED)
-        self.client_socket.sendall(pickle.dumps('reset'))
-        
-# Hauptprogramm
-if __name__ == "__main__":
-    root = tk.Tk()
-    client = TicTacToeClient(root)
+        self.initialize_game() # Initialisiert das Spiel neu
+        self.update_buttons() # Aktualisiert die Buttons
+        self.status_label.config(text="Connecting to server...") # Setzt das Statuslabel zurück
+        self.reset_button.config(state=tk.DISABLED) # Deaktiviert den Reset-Button
+        self.client_socket.sendall(pickle.dumps('reset')) # Sendet den Reset-Befehl an den Server
+
+if __name__ == "__main__": # Main Methode für einen sicheren Start 
+    root = tk.Tk() 
+    client = TicTacToeClient(root) 
     root.mainloop()
